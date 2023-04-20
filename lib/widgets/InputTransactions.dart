@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class InputTransactions extends StatefulWidget {
   final Function transactionHandler;
@@ -11,18 +12,35 @@ class InputTransactions extends StatefulWidget {
 }
 
 class _InputTransactionsState extends State<InputTransactions> {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController amountController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  void addTransaction() {
+    if (hasNumericValue(_amountController.text) &&
+        isValidTitle(_titleController.text) &&
+        _selectedDate != null) {
+      widget.transactionHandler(
+          _titleController.text, _amountController.text, _selectedDate);
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _presentDatePicker() {
+    showDatePicker(
+            context: context,
+            initialDate: DateTime.now(),
+            firstDate: DateTime(2022),
+            lastDate: DateTime.now())
+        .then((pickedDate) {
+      if (pickedDate == null) return;
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    void addTransaction() {
-      if (hasNumericValue(amountController.text) &&
-          isValidTitle(titleController.text)) {
-        widget.transactionHandler(titleController.text, amountController.text);
-        Navigator.of(context).pop();
-      }
-    }
-
     return Card(
       margin: EdgeInsets.all(5),
       elevation: 5,
@@ -30,46 +48,68 @@ class _InputTransactionsState extends State<InputTransactions> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           TextField(
-            maxLength: 7,
-            controller: amountController,
+            controller: _amountController,
             onSubmitted: (_) => addTransaction(),
             decoration: InputDecoration(
               labelText: "Amount",
               labelStyle: TextStyle(
                 fontSize: 16.0,
-                color: Colors.blue,
+                color: Theme.of(context).accentColor,
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
-                  color: Colors.blue,
+                  color: Theme.of(context).accentColor,
                   width: 2.0,
                 ),
               ),
             ),
           ),
           TextField(
-            controller: titleController,
+            controller: _titleController,
             onSubmitted: (_) => addTransaction(),
             decoration: InputDecoration(
               labelText: "Title",
               labelStyle: TextStyle(
                 fontSize: 16.0,
-                color: Colors.blue,
+                color: Theme.of(context).accentColor,
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
-                  color: Colors.blue,
+                  color: Theme.of(context).accentColor,
                   width: 2.0,
                 ),
               ),
             ),
           ),
-          TextButton(
+          Container(
+            height: 35,
+            child: Row(
+              children: [
+                if (_selectedDate == null)
+                  Expanded(child: Text("no date choosen"))
+                else
+                  Expanded(
+                    child: Text(
+                        "Date: ${DateFormat.yMd().format(_selectedDate!)}"),
+                  ),
+                TextButton(
+                  onPressed: _presentDatePicker,
+                  child: Text(
+                    "choose date",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
             onPressed: addTransaction,
             child: Text(
               "Add Transaction",
               style: TextStyle(
-                  color: Colors.lightGreen, fontWeight: FontWeight.bold),
+                color: Theme.of(context).primaryColorLight,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
